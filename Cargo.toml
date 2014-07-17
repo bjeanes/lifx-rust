@@ -1,0 +1,8 @@
+[package]
+name = "lifx"
+version = "0.1.0"
+authors = [ "me@bjeanes.com" ]
+
+[dependencies.color]
+git = "https://github.com/bjz/color-rs.git"
+
