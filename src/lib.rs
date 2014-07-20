@@ -4,7 +4,7 @@
 extern crate serialize;
 
 use std::default::Default;
-use std::io::{Reader,BufReader};
+use std::io::{IoResult,Reader,BufReader};
 use serialize::{Encodable,Decodable};
 
 #[derive(Encodable,Decodable)]
@@ -66,29 +66,27 @@ impl Message {
     Message { .. Default::default() }
   }
 
-  pub fn from_reader<T: Reader>(reader: &mut T) -> Option<Message> {
+  pub fn from_reader<T: Reader>(reader: &mut T) -> IoResult<Message> {
     let mut mesg = Message::new();
 
-    // FIXME: get rid of this unwrap crap once decoding properly
-    mesg.size        = reader.read_le_u16().unwrap();
-    let bitfield     = reader.read_le_u16().unwrap();
+    mesg.size        = try!(reader.read_le_u16());
+    let bitfield     = try!(reader.read_le_u16());
     mesg.version     = bitfield & 0b0000111111111111;
     mesg.addressable = bitfield & 0b0001000000000000 > 0;
     mesg.tagged      = bitfield & 0b0010000000000000 > 0;
 
-    reader.read_le_u32(); // unused
-    reader.read(mesg.target);
-    reader.read(mesg.site);
-    let bitfield     = reader.read_le_u16().unwrap(); // only 1st bit used
-    mesg.acknowledge = bitfield & 1 == 1;
-    mesg.at_time     = reader.read_le_u64().unwrap();
-    mesg.kind        = reader.read_le_u16().unwrap();
+    let _ = try!(reader.read_le_u32());
+    try!(reader.read(mesg.target));
+    try!(reader.read(mesg.site));
+    mesg.acknowledge = try!(reader.read_le_u16()) & 1 == 1; // only 1st bit used
+    mesg.at_time     = try!(reader.read_le_u64());
+    mesg.kind        = try!(reader.read_le_u16());
     mesg.payload     = EMPTY; // FIXME: read actual payload!
 
-    Some(mesg)
+    Ok(mesg)
   }
 
-  pub fn from_bytes(bytes: &[u8]) -> Option<Message> {
+  pub fn from_bytes(bytes: &[u8]) -> IoResult<Message> {
     Message::from_reader(&mut BufReader::new(bytes))
   }
 }
@@ -105,7 +103,7 @@ mod test {
       0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xac,
       0x0d, 0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00];
 
-    let mesg = Message::from_bytes(bytes).unwrap();
+    let mesg = Message::from_bytes(bytes).ok().expect("unable to parse bytes into message");
 
     assert!(mesg.size == 57)
     assert!(mesg.version == 1024)
