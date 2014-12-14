@@ -1,13 +1,12 @@
 #![crate_name = "lifx"]
-#![feature(struct_variant)]
+
+#![allow(dead_code)]
 
 extern crate serialize;
 
 use std::default::Default;
 use std::io::{IoResult,Reader,BufReader};
-use serialize::{Encodable,Decodable};
 
-#[derive(Encodable,Decodable)]
 pub struct Message {
   pub size: u16,
   pub version: u16, // encoded in 12 bits
@@ -18,10 +17,9 @@ pub struct Message {
   pub acknowledge: bool,
   pub at_time: u64,
   pub kind: u16,
-  pub payload: Payload,
+  payload: Payload,
 }
 
-#[derive(Encodable,Decodable)]
 struct HSBK {
   hue: u16,
   saturation: u16,
@@ -29,7 +27,6 @@ struct HSBK {
   kelvin: u16,
 }
 
-#[derive(Encodable,Decodable)]
 enum Payload {
   EMPTY,
   DeviceGetVersion, // 32
@@ -40,7 +37,7 @@ enum Payload {
 }
 
 impl Default for Payload {
-  fn default() -> Payload { EMPTY }
+  fn default() -> Payload { Payload::EMPTY }
 }
 
 impl Default for Message {
@@ -55,7 +52,7 @@ impl Default for Message {
       acknowledge: false,
       at_time: 0,
       kind: 0,
-      payload: EMPTY,
+      payload: Payload::EMPTY,
     }
   }
 }
@@ -76,12 +73,12 @@ impl Message {
     mesg.tagged      = bitfield & 0b0010000000000000 > 0;
 
     let _ = try!(reader.read_le_u32());
-    try!(reader.read(mesg.target));
-    try!(reader.read(mesg.site));
+    try!(reader.read(mesg.target.as_mut_slice()));
+    try!(reader.read(mesg.site.as_mut_slice()));
     mesg.acknowledge = try!(reader.read_le_u16()) & 1 == 1; // only 1st bit used
     mesg.at_time     = try!(reader.read_le_u64());
     mesg.kind        = try!(reader.read_le_u16());
-    mesg.payload     = EMPTY; // FIXME: read actual payload!
+    mesg.payload     = Payload::EMPTY; // FIXME: read actual payload!
 
     Ok(mesg)
   }

@@ -1,0 +1,12 @@
+[root]
+name = "lifx"
+version = "0.0.1-pre"
+dependencies = [
+ "color 0.0.1 (git+https://github.com/bjz/color-rs.git)",
+]
+
+[[package]]
+name = "color"
+version = "0.0.1"
+source = "git+https://github.com/bjz/color-rs.git#d14954b4bda08e888251d9d9766d1761533be2d7"
+
