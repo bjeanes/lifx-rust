@@ -2,4 +2,5 @@
 name = "lifx"
 version = "0.0.1-pre"
 authors = [ "Bo Jeanes <me@bjeanes.com>" ]
+license = "MPL-2.0"
 
