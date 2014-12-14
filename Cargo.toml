@@ -3,6 +3,3 @@ name = "lifx"
 version = "0.0.1-pre"
 authors = [ "Bo Jeanes <me@bjeanes.com>" ]
 
-[dependencies.color]
-git = "https://github.com/bjz/color-rs.git"
-
